@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const bodyParser = require('body-parser');
+const dns = require('node:dns');
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
@@ -25,7 +26,17 @@ app.get('/api/hello', function(req, res) {
 });
 
 app.post('/api/shorturl', function(req, res) {
-  res.json({ test: req.body.url });
+  const url = req.body.url;
+  const host = url.split('//')[1]; // http(s) prefix must be removed
+  dns.lookup(host, function(err, address, family) {
+    if (err) {
+      console.log(err);
+      res.json({ error: 'invalid url' });
+    }
+    else {
+      res.json({ original_url: host });
+    }
+  });
 });
 
 app.listen(port, function() {
