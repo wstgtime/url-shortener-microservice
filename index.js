@@ -4,9 +4,16 @@ const cors = require('cors');
 const app = express();
 const bodyParser = require('body-parser');
 const dns = require('node:dns');
+const mongoose = require('mongoose');
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
+const uri = process.env.MONGO_URI;
+
+mongoose.connect(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 
 // Middleware to parse JSON and urlencoded form data
 app.use(bodyParser.json());
@@ -30,7 +37,6 @@ app.post('/api/shorturl', function(req, res) {
   const host = url.split('//')[1]; // http(s) prefix must be removed
   dns.lookup(host, function(err, address, family) {
     if (err) {
-      console.log(err);
       res.json({ error: 'invalid url' });
     }
     else {
