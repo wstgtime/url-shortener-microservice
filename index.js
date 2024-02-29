@@ -25,6 +25,20 @@ const urlSchema = new mongoose.Schema({
 
 UrlObject = mongoose.model('UrlObject', urlSchema);
 
+const createAndSaveUrlObject = (done) => {
+  const testUrlObj = {
+    original_url: 'https://www.google.com',
+    short_url: 1
+  }
+
+  let document = new UrlObject(testUrlObj);
+
+  document.save(function(err, data) {
+    if (err) return console.error(err);
+    done(null, data);
+  });
+}
+
 // Middleware to parse JSON and urlencoded form data
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
