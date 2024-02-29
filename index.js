@@ -15,6 +15,16 @@ mongoose.connect(uri, {
   useUnifiedTopology: true
 });
 
+const urlSchema = new mongoose.Schema({
+  original_url: {
+    type: String,
+    required: true
+  },
+  short_url: Number
+});
+
+UrlObject = mongoose.model('UrlObject', urlSchema);
+
 // Middleware to parse JSON and urlencoded form data
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
