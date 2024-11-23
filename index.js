@@ -5,15 +5,16 @@ const app = express();
 const bodyParser = require('body-parser');
 const dns = require('node:dns');
 const mongoose = require('mongoose');
+const { MongoClient } = require('mongodb');
+const urlparser = require('url');
+
+const client = new MongoClient(process.env.DB_URL);
+const db = client.db("urlshortener");
+const urls = db.collection('urls');
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
 const uri = process.env.MONGO_URI;
-
-mongoose.connect(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
 
 const urlSchema = new mongoose.Schema({
   original_url: {
@@ -25,7 +26,7 @@ const urlSchema = new mongoose.Schema({
 
 UrlObject = mongoose.model('UrlObject', urlSchema);
 
-const createAndSaveUrlObject = (done) => {
+const createAndSaveUrlObject = async (done) => {
   const testUrlObj = {
     original_url: 'https://www.google.com',
     short_url: 1
@@ -33,17 +34,23 @@ const createAndSaveUrlObject = (done) => {
 
   let document = new UrlObject(testUrlObj);
 
-  document.save(function(err, data) {
-    if (err) return console.error(err);
+  // document.save(function(err, data) {
+  //   if (err) return console.error(err);
+  //   done(null, data);
+  // });
+
+  try {
+    const data = document.save();
     done(null, data);
-  });
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 // Middleware to parse JSON and urlencoded form data
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
-app.use(cors());
 
 app.use('/public', express.static(`${process.cwd()}/public`));
 
@@ -57,16 +64,17 @@ app.get('/api/hello', function(req, res) {
 });
 
 app.post('/api/shorturl', function(req, res) {
-  const url = req.body.url;
-  const host = url.split('//')[1]; // http(s) prefix must be removed
-  dns.lookup(host, function(err, address, family) {
-    if (err) {
-      res.json({ error: 'invalid url' });
-    }
-    else {
-      res.json({ original_url: host });
-    }
-  });
+  console.log(req.body);
+  const dnslookup = dns.lookup(urlparser.parse(url)).hostname,
+    async (err, address) => {
+      if (!address) {
+        res.json({ error: "Invalid URL"});
+      } else {
+        // valid url
+        const urlCount = await urls.countDocuments({});
+      }
+    };
+  res.json({})
 });
 
 app.listen(port, function() {
